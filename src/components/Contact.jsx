@@ -51,8 +51,8 @@ export default function Contact() {
     setStatus({ state: "submitting", message: "" });
 
     try {
-      // Use Formspree API endpoint with real error handling
-      const response = await fetch("https://formspree.io/f/xovqzzkg", {
+      // Direct email delivery via FormSubmit connected to your Gmail
+      const response = await fetch("https://formsubmit.co/ajax/anshkumar590423@gmail.com", {
         method: "POST",
         headers: {
           "Accept": "application/json",
@@ -61,29 +61,30 @@ export default function Contact() {
         body: JSON.stringify({
           name: formState.name,
           email: formState.email,
-          subject: formState.subject,
+          _subject: `[Portfolio Inquiry] ${formState.subject}`,
           message: formState.message,
-          _replyto: formState.email
+          _replyto: formState.email,
+          _captcha: "false",
+          _template: "table"
         })
       });
 
-      if (response.ok) {
-        // Real success verification: only show success if backend accepted the dispatch!
+      const data = await response.json().catch(() => ({}));
+
+      if (response.ok && data.success !== "false") {
         setStatus({
           state: "success",
-          message: "Thank you! Your message has been sent successfully. I will get back to you within 24 hours."
+          message: "Thank you! Your message has been delivered to Ansh's inbox. I will reply within 24 hours."
         });
         setFormState({ name: "", email: "", subject: "", message: "" });
         setErrors({});
       } else {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Submission rejected by service");
+        throw new Error(data.message || "Email service returned an error");
       }
     } catch (err) {
-      // Authentic error handling: Never show fake success!
       setStatus({
         state: "error",
-        message: "Could not deliver message via the automated service. Please send your message directly to hello@anshkumar.space or click below."
+        message: "Automated delivery service encountered an issue. Click below to send directly via your email client to hello@anshkumar.space."
       });
     } finally {
       setIsSubmitting(false);
